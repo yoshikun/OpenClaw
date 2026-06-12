@@ -15,3 +15,5 @@ Thumbs.db
 # Local temp
 *.log
 *.tmp
+
+.git-creds
