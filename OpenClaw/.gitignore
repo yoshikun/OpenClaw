@@ -1,0 +1,17 @@
+﻿# Secrets
+*.cookies.json
+*cookies.json
+*_csrf.json
+*_session*
+node_modules/
+
+# Media
+media/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Local temp
+*.log
+*.tmp
