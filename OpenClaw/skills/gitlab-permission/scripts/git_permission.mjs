@@ -19,6 +19,7 @@ import { fileURLToPath } from 'url';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const WS_DIR = path.resolve(__dirname, '..', '..', '..', 'workspace');
 const COOKIES_FILE = path.join(WS_DIR, 'gitlab_cookies.json');
+const CSRF_FILE = path.join(WS_DIR, 'gitlab_csrf.json');
 const GITLAB = 'https://git.devcloud.ztgame.com';
 
 const LEVEL_MAP = {
@@ -33,6 +34,15 @@ const LEVEL_NAMES = { 10: 'Guest', 20: 'Reporter', 30: 'Developer', 40: 'Maintai
 function getHeaders() {
   const cookies = JSON.parse(fs.readFileSync(COOKIES_FILE, 'utf8'));
   return { 'Cookie': cookies.map(c => `${c.name}=${c.value}`).join('; '), 'Accept': 'application/json', 'Content-Type': 'application/x-www-form-urlencoded' };
+}
+
+function getWriteHeaders() {
+  const h = getHeaders();
+  try {
+    const csrf = JSON.parse(fs.readFileSync(CSRF_FILE, 'utf8'));
+    h['X-CSRF-Token'] = csrf.token;
+  } catch {}
+  return h;
 }
 
 async function searchUser(keyword) {
@@ -64,7 +74,7 @@ async function listMembers(projectId) {
 
 async function addMember(projectId, userName, level) {
   const user = await findUsers(userName);
-  const headers = getHeaders();
+  const headers = getWriteHeaders();
   const body = new URLSearchParams({ user_id: String(user.id), access_level: String(LEVEL_MAP[level]) });
   const r = await fetch(`${GITLAB}/api/v4/projects/${projectId}/members`, { method: 'POST', headers, body: body.toString() });
   const result = await r.json();
@@ -74,7 +84,7 @@ async function addMember(projectId, userName, level) {
 
 async function updateMember(projectId, userName, level) {
   const user = await findUsers(userName);
-  const headers = getHeaders();
+  const headers = getWriteHeaders();
   const body = new URLSearchParams({ access_level: String(LEVEL_MAP[level]) });
   const r = await fetch(`${GITLAB}/api/v4/projects/${projectId}/members/${user.id}`, { method: 'PUT', headers, body: body.toString() });
   const result = await r.json();
@@ -84,7 +94,7 @@ async function updateMember(projectId, userName, level) {
 
 async function removeMember(projectId, userName) {
   const user = await findUsers(userName);
-  const r = await fetch(`${GITLAB}/api/v4/projects/${projectId}/members/${user.id}`, { method: 'DELETE', headers: getHeaders() });
+  const r = await fetch(`${GITLAB}/api/v4/projects/${projectId}/members/${user.id}`, { method: 'DELETE', headers: getWriteHeaders() });
   if (r.ok || r.status === 204) console.log(`✅ 已移除 ${user.name} (@${user.username})`);
   else { const t = await r.text(); console.error(`❌ 失败:`, t.substring(0, 200)); }
 }

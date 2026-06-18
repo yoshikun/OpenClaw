@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "lastGood": {
+    "deepseek": "deepseek:default"
+  },
+  "usageStats": {
+    "qwen:default": {
+      "errorCount": 1,
+      "failureCounts": {
+        "auth": 1
+      },
+      "lastFailureAt": 1778569155965,
+      "cooldownUntil": 1778569185965,
+      "cooldownReason": "auth"
+    },
+    "deepseek:default": {
+      "errorCount": 0,
+      "lastUsed": 1781612176926
+    }
+  }
+}

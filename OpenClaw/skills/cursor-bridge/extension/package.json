@@ -1,0 +1,36 @@
+{
+  "name": "cursor-bridge",
+  "displayName": "Cursor Bridge",
+  "description": "Real-time bridge between OpenClaw and Cursor Agent. Receives instructions from OpenClaw via WebSocket and automatically submits them to the Cursor Agent.",
+  "version": "1.0.0",
+  "publisher": "openclaw",
+  "license": "MIT",
+  "engines": {
+    "vscode": "^1.90.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "cursor-bridge.show",
+        "title": "OpenClaw: Show Bridge Status"
+      }
+    ],
+    "configuration": {
+      "title": "Cursor Bridge",
+      "properties": {
+        "cursorBridge.port": {
+          "type": "number",
+          "default": 18792,
+          "description": "WebSocket server port for receiving instructions from OpenClaw"
+        }
+      }
+    }
+  }
+}

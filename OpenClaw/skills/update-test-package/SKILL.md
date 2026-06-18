@@ -46,9 +46,19 @@ powershell -ExecutionPolicy Bypass -File "E:\Solo\nightoffullmoon\tools\hotupdat
 - 默认 **增量构建**（不清理 Bundles 缓存），速度快。资源异常时才需手动全量
 - 首次使用需在 Unity Editor 中打开 BuildPipeline 窗口配置各步骤参数
 
-## 完成通知
+## 🔔 完成通知（必须执行）
 
-成功 → 飞书群 `oc_59afc01122ec0cd04ca4d8c5103c7a77` 发送：
-> `热更已完成，测试服已更新 <at user_id="ou_348eeddd81d4c03865f9f1684fce6966">兵王(周以天)</at>`
+每次热更完成无论成功还是失败，都**必须**在以下地方通知：
 
-失败 → 通知查看日志
+### 飞书开发群
+群 `oc_59afc01122ec0cd04ca4d8c5103c7a77`
+
+成功 → 发送：
+> `热更已完成，测试包已更新 <at user_id="ou_348eeddd81d4c03865f9f1684fce6966">兵王(周以天)</at>`
+
+失败 → 发送失败原因+日志位置
+
+### 直接告知主人
+也通过当前飞书会话告知主人（Yousan/叶枝君）结果
+
+> ⚠️ 此通知步骤**不可跳过**，每次执行热更后必须完成

@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "profiles": {
+    "qwen:default": {
+      "type": "api_key",
+      "provider": "qwen",
+      "key": "sk-2892ef0455da40ac860eadea997c6ce2"
+    },
+    "deepseek:default": {
+      "type": "api_key",
+      "provider": "deepseek",
+      "key": "sk-ef405e5816c64ae28fd79ec6f9d1cfca"
+    }
+  }
+}

@@ -114,6 +114,19 @@ powershell -ExecutionPolicy Bypass -File "E:\Solo\nightoffullmoon\tools\hotupdat
 - `<at>` 里的名字只是展示用兜底，飞书实际会按 `user_id` 自动解析
 - 纯文本 `@名字` 只是文字，不会触发提醒
 
+## 备份指令
+
+**触发词：** `备份`、`备份所有东西`、`备份你的记忆`、`保存配置`、`备份到GitHub`
+
+对我说这些词时，我会做以下操作：
+1. 收集 OpenClaw 所有配置：
+   - workspace 文件（AGENTS.md, SOUL.md, TOOLS.md, USER.md, MEMORY.md 等）
+   - 所有 plugin-skills（自定义技能）
+   - config/openclaw.json
+   - 辅助脚本
+2. 复制到桌面 git 仓库 `C:\Users\yyzypublic\Desktop\OpenClaw\OpenClaw\`
+3. git add + commit + push 到 GitHub `yoshikun/OpenClaw`
+
 ## Related
 
 - [Agent workspace](/concepts/agent-workspace)

@@ -38,7 +38,7 @@ const url = await createBug({
 | Field | ID | Common Value |
 |-------|-----|--------|
 | 标题 | `#BugTitle` | Bug 简述 |
-| 发现版本 | `#BugVersionReport` | `【1V1】正式版本V2.0` |
+| 发现版本 | `#BugVersionReport` | `【1V1】正式版本V4.0` |
 | 处理人 | `#BugCurrentOwnerValue` | 输入姓名触发自动补全 |
 | 优先级 | `#BugPriority` | `P2` |
 | 研发分支 | `#BugCustomFieldOne` | `YZY_1V1 V1.0 Beta` |

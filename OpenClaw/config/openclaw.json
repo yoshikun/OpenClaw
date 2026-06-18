@@ -1,8 +1,8 @@
-﻿{
+{
   "gateway": {
     "auth": {
       "mode": "token",
-      "token": "***redacted***"
+      "token": "88549e2731624b7be653a67f31b01eea713b2e109020a52e"
     },
     "mode": "local",
     "port": 18789,
@@ -23,7 +23,7 @@
   },
   "meta": {
     "lastTouchedVersion": "2026.5.7",
-    "lastTouchedAt": "2026-05-20T08:01:26.272Z"
+    "lastTouchedAt": "2026-06-15T06:23:00.257Z"
   },
   "agents": {
     "defaults": {
@@ -102,7 +102,7 @@
     "providers": {
       "openai-proxy": {
         "baseUrl": "http://10.254.48.156:4000/v1",
-        "apiKey": "***redacted***",
+        "apiKey": "sk-z0xdVL0ufNdrcatUDET6GA",
         "api": "openai-completions",
         "request": {
           "allowPrivateNetwork": true
@@ -417,6 +417,12 @@
       },
       "tapd-vsmode-story": {
         "enabled": true
+      },
+      "tapd-cookie-keepalive": {
+        "enabled": true
+      },
+      "cursor-bridge": {
+        "enabled": true
       }
     }
   },
@@ -424,7 +430,7 @@
     "feishu": {
       "enabled": true,
       "appId": "cli_a9458ff380b99ccb",
-      "appSecret": "***redacted***",
+      "appSecret": "Qs3NVpgH7h4UP7cVPfZRHh72E3jEOGKv",
       "connectionMode": "websocket",
       "domain": "feishu",
       "dmPolicy": "open",
@@ -437,7 +443,7 @@
   },
   "messages": {
     "ackReactionScope": "group-mentions",
-    "ackReaction": "馃憖",
+    "ackReaction": "👀",
     "queue": {
       "debounceMs": 500,
       "cap": 50,
@@ -446,4 +452,3 @@
     }
   }
 }
-
