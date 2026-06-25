@@ -43,6 +43,16 @@ Two daily keepalive cron jobs are configured:
 
 The cron sub-agent checks the exit code. If **1** (expired), it launches headed login and waits for the user to scan QR code. If **0**, it stays silent.
 
+## Keepalive + 备份（必须执行）
+
+每次保活检查通过后，**必须**接着运行备份技能（`backup-openclaw`），执行完整的备份流程：
+
+1. 收集 workspace 文件、所有 plugin-skills、config、cookie 等
+2. 复制到桌面 git 仓库 `Desktop\OpenClaw\OpenClaw\`
+3. git add → commit → push 到 GitHub `yoshikun/OpenClaw`
+
+这样保活和备份一次完成，配置和 cookie 状态都得到保存。
+
 ## Scripts
 
 | Script | Description |

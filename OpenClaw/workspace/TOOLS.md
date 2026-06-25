@@ -60,9 +60,10 @@ Add whatever helps you do your job. This is your cheat sheet.
 
 **群聊规范:** 每次在群里收到 @消息时，先立即回复一句礼貌性回应（如"收到""好的""来了"等），再开始处理需求。不要让群里的人等着没反应。
 
-### 更新测试服 (Update Test Server)
+### 更新测试服 (Update Test Server / Client Hotupdate)
 
 **触发指令:** "更新测试服"
+> 📝 **注意：** 「更新测试服」默认指**客户端热更**（Unity 打资源包 + 上传CDN）。要更新服务端时主人会特别说明「更新服务端」或「服务端」。不要再走 DevOps 服务端流水线。
 
 **流程:**
 1. 检查 Unity 热更流水线是否正在执行（通过进程命令行参数 `RunHotUpdatePipeline` 判断），如果有则提示已有流水线在执行，退出任务
@@ -93,6 +94,7 @@ powershell -ExecutionPolicy Bypass -File "E:\Solo\nightoffullmoon\tools\hotupdat
 
 **参数说明:**
 - Unity 路径: `C:\Program Files\Unity\Hub\Editor\2020.3.49f1\Editor\Unity.exe`
+  - ⚠️ 实际安装目录名是 `2020.3.49f1`（不是 `2020.3.49f1c1`），bat 文件已修正
 - 流水线入口: `YYZY.BuildPipeline.BuildPipeline.RunHotUpdatePipeline`
 - 流水线名称: "热更"
 
@@ -126,6 +128,8 @@ powershell -ExecutionPolicy Bypass -File "E:\Solo\nightoffullmoon\tools\hotupdat
    - 辅助脚本
 2. 复制到桌面 git 仓库 `C:\Users\yyzypublic\Desktop\OpenClaw\OpenClaw\`
 3. git add + commit + push 到 GitHub `yoshikun/OpenClaw`
+
+> TAPD 每日保活也会自动做完整的备份流程，详见 tapd-cookie-keepalive 技能。
 
 ## Related
 

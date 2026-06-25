@@ -1,9 +1,12 @@
-﻿# Secrets
+# Secrets
 *.cookies.json
 *cookies.json
 *_csrf.json
 *_session*
 node_modules/
+
+# Session logs
+agents/sessions/
 
 # Media
 media/
