@@ -23,7 +23,7 @@
   },
   "meta": {
     "lastTouchedVersion": "2026.5.7",
-    "lastTouchedAt": "2026-06-15T06:23:00.257Z"
+    "lastTouchedAt": "2026-07-10T10:55:29.077Z"
   },
   "agents": {
     "defaults": {
@@ -423,6 +423,9 @@
       },
       "cursor-bridge": {
         "enabled": true
+      },
+      "feishu-notify": {
+        "enabled": true
       }
     }
   },
@@ -449,6 +452,18 @@
       "cap": 50,
       "drop": "summarize",
       "mode": "steer"
+    }
+  },
+  "mcp": {
+    "servers": {
+      "tapd": {
+        "command": "tapd-mcp",
+        "args": [],
+        "env": {
+          "TAPD_API_TOKEN": "BLgtZ9SNS1YRsFHb",
+          "TAPD_WORKSPACE_ID": "31253609"
+        }
+      }
     }
   }
 }

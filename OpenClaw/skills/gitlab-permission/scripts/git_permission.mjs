@@ -9,6 +9,8 @@
  *   node scripts/git_permission.mjs search <keyword>                           # 搜索用户
  *   node scripts/git_permission.mjs projects                                    # 列出可管理的项目
  * 
+ *   node scripts/git_permission.mjs batch <user_name> <level>   # 批量添加到所有核心仓库
+ * 
  * 权限等级: guest(10) / reporter(20) / developer(30) / maintainer(40) / owner(50)
  */
 
@@ -21,6 +23,18 @@ const WS_DIR = path.resolve(__dirname, '..', '..', '..', 'workspace');
 const COOKIES_FILE = path.join(WS_DIR, 'gitlab_cookies.json');
 const CSRF_FILE = path.join(WS_DIR, 'gitlab_csrf.json');
 const GITLAB = 'https://git.devcloud.ztgame.com';
+
+// 8 个核心仓库（SKILL.md 同步更新）
+const CORE_PROJECTS = [
+  { id: 5058, name: 'yyzy_proj/1v1/config' },
+  { id: 4710, name: 'yyzy_proj/gordian/gameconfig' },
+  { id: 5048, name: 'yyzy_proj/framework/DidaFramework' },
+  { id: 5145, name: 'yyzy_proj/1v1/battle1v1' },
+  { id: 5060, name: 'yyzy_proj/1v1/proto' },
+  { id: 2751, name: 'yyzy/develop_client/nightoffullmoon' },
+  { id: 5638, name: 'didastudio/cdn_251121' },
+  { id: 5871, name: 'yezhijun1/cdn_solo' },
+];
 
 const LEVEL_MAP = {
   guest: 10, '10': 10,
@@ -117,6 +131,15 @@ async function main() {
   try {
     if (cmd === 'list') await listMembers(process.argv[3]);
     else if (cmd === 'add') await addMember(process.argv[3], process.argv[4], process.argv[5]);
+    else if (cmd === 'batch') {
+      const level = process.argv[4] || 'reporter';
+      for (const p of CORE_PROJECTS) {
+        process.stdout.write(`${p.name} ... `);
+        try {
+          await addMember(p.id, process.argv[3], level);
+        } catch(e) { console.log(`❌ ${e.message}`); }
+      }
+    }
     else if (cmd === 'update') await updateMember(process.argv[3], process.argv[4], process.argv[5]);
     else if (cmd === 'remove') await removeMember(process.argv[3], process.argv[4]);
     else if (cmd === 'search') {

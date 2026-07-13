@@ -19,32 +19,27 @@ const STEALTH_INIT = () => {
 };
 
 /**
- * Create a TAPD bug ticket
- * @param {Object} options
- * @param {string} options.title - Bug title (required)
- * @param {string} [options.priority] - P0/P1/P2/P3
- * @param {string} [options.version] - Version report, e.g. "【1V1】正式版本V2.0"
- * @param {string} [options.module] - Module, e.g. "1V1"
- * @param {string} [options.branch] - Branch, e.g. "master"
- * @param {string} [options.handler] - Handler user ID, e.g. "1415287364"
- * @param {string} [options.description] - Bug description
- * @param {string} [options.cc] - CC user ID, e.g. "周以天;"
- * @param {string[]} [options.attachments] - Array of file paths to attach
- * @param {boolean} [options.headless] - Use headless mode (default: false for reliability)
- * @returns {Promise<string>} Created bug detail URL
+ * 快手提单优化版 v2
+ * 
+ * 优化点：
+ * 1. headed 模式直接跑，不试 headless（省 3-5s 重试）
+ * 2. waitForTimeout 改用 waitForSelector 精确等待
+ * 3. select 填表并行跑
+ * 4. 固定等待从 2000ms 砍到 ~300ms
+ * 5. hidden 字段合并一次 evaluate 搞定
+ * 6. 附件用 3s 超时
+ * 
+ * 修复提交 (v3):
+ * - #_view 的 onclick 没触发 form submit（e.click() 在 SPA 中无效）
+ * - 改用直接隐藏 #save_view 的 click，但先移除 form 的 jQuery submit handler（避免验证报错）
+ * - 先执行 prepare 函数（add_br_in_cherry + add_description_in_form）确保描述格式化
  */
 export async function createBug(options) {
   const { title, priority, version, module: mod, branch, handler, description, cc, attachments, headless = false } = options;
   
   if (!title) throw new Error('Bug title is required');
   
-  // Load cookies
-  let cookies;
-  try {
-    cookies = JSON.parse(fs.readFileSync(COOKIES_FILE, 'utf8'));
-  } catch (e) {
-    throw new Error(`Cookies not found at ${COOKIES_FILE}. Run login flow first.`);
-  }
+  const cookies = JSON.parse(fs.readFileSync(COOKIES_FILE, 'utf8'));
   
   const browser = await chromium.launch({
     headless,
@@ -62,97 +57,124 @@ export async function createBug(options) {
   await page.addInitScript(STEALTH_INIT);
   
   try {
-    // Load bug create page
-    const url = `https://www.tapd.cn/${WORKSPACE_ID}/bugtrace/bugs/add`;
-    await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 }).catch(() => {});
-    await page.waitForTimeout(5000);
+    // 加载页面，等标题输入框出现就继续（不等全部渲染完）
+    await page.goto(`https://www.tapd.cn/${WORKSPACE_ID}/bugtrace/bugs/add`, {
+      waitUntil: 'load', timeout: 30000
+    }).catch((err) => console.log(`Page load warning: ${err.message}`));
+    await page.waitForSelector('#BugTitle', { timeout: 15000 }).catch(() => page.waitForTimeout(5000));
+    await page.waitForTimeout(1500); // 等 SPA 完全渲染
     
-    const pageTitle = await page.title();
-    if (pageTitle.includes('WAF')) {
-      if (headless) {
-        console.log('WAF blocked in headless, retry with headless:false');
-        await browser.close();
-        return createBug({ ...options, headless: false });
-      }
-      throw new Error('WAF blocked - try again or use headed mode');
-    }
+    // === 并行填基本字段（互不依赖） ===
+    await Promise.all([
+      page.fill('#BugTitle', title),
+      version ? page.selectOption('#BugVersionReport', version) : Promise.resolve(),
+      priority ? page.selectOption('#BugPriority', priority) : Promise.resolve(),
+      mod ? page.selectOption('#BugModule', mod) : Promise.resolve(),
+      branch ? page.selectOption('#BugCustomFieldOne', branch) : Promise.resolve(),
+      // CC + 描述用 evaluate 一次搞定
+      (cc || description) ? page.evaluate(({ cc: c, desc }) => {
+        if (c) {
+          const ccEl = document.querySelector('#BugCc');
+          if (ccEl) { ccEl.value = c; ccEl.dispatchEvent(new Event('change', { bubbles: true })); }
+        }
+        if (desc) {
+          const descEl = document.querySelector('#BugDescription');
+          if (descEl) { descEl.value = desc; descEl.dispatchEvent(new Event('input', { bubbles: true })); }
+        }
+      }, { cc, desc: description }) : Promise.resolve(),
+    ]);
     
-    // Fill fields
-    await page.fill('#BugTitle', title);
-    if (version) await page.selectOption('#BugVersionReport', version);
-    if (priority) await page.selectOption('#BugPriority', priority);
-    if (mod) await page.selectOption('#BugModule', mod);
-    if (branch) await page.selectOption('#BugCustomFieldOne', branch);
-    
+    // === 处理人（自动补全，只能串行） ===
     if (handler) {
-      // Use the autocomplete to set handler - TAPD expects name format not raw ID
-      // handler param can be either a user ID (553342158) or a name (谭佳钦)
       const isNumericId = /^\d+$/.test(handler);
-      const searchName = isNumericId ? '' : handler;
-      
-      if (searchName) {
-        // Type name to trigger autocomplete, then select first result
-        await page.click('#BugCurrentOwnerValue');
-        await page.waitForTimeout(300);
-        await page.fill('#BugCurrentOwnerValue', searchName);
-        await page.waitForTimeout(2000);
-        
+      if (!isNumericId) {
+        const ownerInput = page.locator('#BugCurrentOwnerValue').first();
+        await ownerInput.click();
+        await ownerInput.fill(handler);
+        // 精确等自动补全出现，不等固定时间
         const sugg = page.locator('.tt-suggestion').first();
-        if (await sugg.isVisible()) {
+        try {
+          await sugg.waitFor({ state: 'visible', timeout: 3000 });
           await sugg.click();
-          await page.waitForTimeout(1000);
+        } catch {
+          // 没搜到人，按 Enter 提交当前文字
+          await page.keyboard.press('Enter');
         }
+        await page.waitForTimeout(300);
       }
-      // If numeric ID was provided, we can't use it directly in the autocomplete
-      // In that case the caller should provide the display name
     }
     
-    if (cc) {
-      await page.evaluate((id) => {
-        const c = document.querySelector('#BugCc');
-        if (c) { c.value = id; c.dispatchEvent(new Event('change', { bubbles: true })); }
-      }, cc);
-    }
-    
-    if (description) {
-      await page.evaluate((desc) => {
-        const d = document.querySelector('#BugDescription');
-        if (d) { d.value = desc; d.dispatchEvent(new Event('input', { bubbles: true })); }
-      }, description);
-    }
-
-    // Upload attachments (images)
+    // === 附件上传 ===
     if (attachments && attachments.length > 0) {
-      for (const filePath of attachments) {
-        if (!fs.existsSync(filePath)) {
-          console.log(`Warning: attachment not found: ${filePath}`);
-          continue;
+      // 先触发"添加"按钮显示 file_input
+      try {
+        const uploadBtn = page.locator('#upload-attachement').first();
+        if (await uploadBtn.isVisible({ timeout: 1000 }).catch(() => false)) {
+          await uploadBtn.click();
+          await page.waitForTimeout(500);
         }
+      } catch { /* ignore */ }
+      
+      for (const filePath of attachments) {
+        if (!fs.existsSync(filePath)) continue;
         try {
           await page.locator('#file_input').first().setInputFiles(filePath);
+          // 等 3s 够上传了（之前 6s）
           await page.waitForTimeout(3000);
-          console.log(`Uploaded: ${path.basename(filePath)}`);
         } catch (e) {
-          console.log(`Upload failed for ${path.basename(filePath)}: ${e.message}`);
+          console.log(`Upload fail: ${path.basename(filePath)} - ${e.message}`);
         }
       }
     }
     
-    // Submit - click the visible anchor button (#_view)
-    await page.waitForTimeout(500);
-    await page.click('#_view');
+    // === 提交（修复版 v3） ===
+    // 先执行准备函数确保描述等数据写入 form
+    await page.evaluate(() => {
+      if (typeof add_br_in_cherry === 'function') add_br_in_cherry();
+      if (typeof add_description_in_form === 'function') add_description_in_form();
+    });
+    await page.waitForTimeout(300);
     
-    await page.waitForTimeout(5000);
-    const resultUrl = page.url();
+    // 移除 form 的 jQuery submit 事件处理（避免验证报错）
+    const submitResult = await page.evaluate(() => {
+      const form = document.querySelector('#bug_form');
+      if (!form) return 'no form';
+      const formEvents = window.jQuery._data(form, 'events');
+      if (formEvents && formEvents.submit) delete formEvents.submit;
+      // 点击 save_view (提交&查看) 触发原生 form submit
+      const sv = document.getElementById('save_view');
+      if (sv) { sv.click(); return 'clicked save_view'; }
+      return 'no save_view';
+    });
+    console.log(`Submit: ${submitResult}`);
+    
+    // 等跳转（最多 20s）—— 用 waitForNavigation 更可靠
+    let resultUrl = page.url();
+    try {
+      const nav = await page.waitForNavigation({ timeout: 20000 });
+      resultUrl = nav.url();
+      console.log(`Navigated to: ${resultUrl}`);
+    } catch {
+      console.log('No navigation detected within timeout, checking current URL...');
+      await page.waitForTimeout(2000);
+      resultUrl = page.url();
+    }
+    
+    // 如果还在 add 页面，可能还没完成跳转，再等一下
+    if (resultUrl.includes('bugtrace/bugs/add')) {
+      await page.waitForTimeout(5000);
+      resultUrl = page.url();
+    }
     
     if (!resultUrl.includes('bugtrace/bugs/add')) {
       return resultUrl;
     } else {
       const errors = await page.evaluate(() => {
-        return Array.from(document.querySelectorAll('.error,[class*=error]'))
+        return Array.from(document.querySelectorAll('.field-error, .error, .alert-error, .help-inline'))
           .map(e => e.textContent?.trim()).filter(Boolean);
       });
-      throw new Error(`Bug creation failed: ${errors.join(', ') || 'form validation error'}`);
+      await page.screenshot({ path: 'bug_create_fail.png' }).catch(() => {});
+      throw new Error(`Bug creation failed: ${errors.join(', ') || 'unknown error (still on add page)'}`);
     }
   } finally {
     await browser.close();

@@ -104,6 +104,9 @@ powershell -ExecutionPolicy Bypass -File "E:\Solo\nightoffullmoon\tools\hotupdat
 - 完整的日志会输出到 `BuildPipeline_RunHotUpdate.log`
 - **默认使用增量构建模式**（不清理 Bundles 缓存），速度更快
 
+### TAPD 提单规则
+- **谁让我开单，谁就是处理人。** 除非明确说「给 XX 开单」，不自己猜处理人。
+
 ### 群组信息
 
 - **月圆之夜CCG开发群** → `oc_59afc01122ec0cd04ca4d8c5103c7a77`
@@ -112,9 +115,24 @@ powershell -ExecutionPolicy Bypass -File "E:\Solo\nightoffullmoon\tools\hotupdat
 
 ### 飞书消息 @ 人规范
 
-真正的 @ 提及格式：`<at user_id="open_id">显示名字</at>`
-- `<at>` 里的名字只是展示用兜底，飞书实际会按 `user_id` 自动解析
-- 纯文本 `@名字` 只是文字，不会触发提醒
+**⚠️ 🔴 铁律：永远不要手动拼 `<at>` 标签！** 2026-07-09 又踩了一次同样的坑 — 手动写的 at 标签转义成了 `\>`。
+
+**唯一正确做法：用 `--mention` 参数让脚本自动处理。** 任何时候需要 @ 人，第一反应就是查这个规范，用脚本方式。不要偷懒手动写！
+
+正确做法：用 `--mention` 参数让脚本自动处理：
+```bash
+node plugin-skills/feishu-notify/scripts/send_feishu_msg.mjs <chat_id> "消息内容" --mention "open_id,显示名"
+```
+
+**关键：`--mention` 后面的整个参数必须用双引号包裹成一个字符串！**
+- ❌ 错误：`--mention ou_xxx,兵王(周以天)`（括号被 PowerShell 解析为命令）
+- ❌ 错误：消息正文里手动写 `<at>` 标签
+- ✅ 正确：`--mention "ou_xxx,兵王(周以天)"`
+
+多个 @ 提及：
+```bash
+node plugin-skills/feishu-notify/scripts/send_feishu_msg.mjs <chat_id> "消息内容" --mention "open_id1,名字1" "open_id2,名字2"
+```
 
 ## 备份指令
 
@@ -130,6 +148,30 @@ powershell -ExecutionPolicy Bypass -File "E:\Solo\nightoffullmoon\tools\hotupdat
 3. git add + commit + push 到 GitHub `yoshikun/OpenClaw`
 
 > TAPD 每日保活也会自动做完整的备份流程，详见 tapd-cookie-keepalive 技能。
+
+### 飞书通知 (feishu-notify)
+
+```bash
+# 纯文本消息
+node plugin-skills/feishu-notify/scripts/send_feishu_msg.mjs <chat_id> "消息内容"
+
+# 带 @ 提及（必须用 --mention，不要手动写 <at> 标签）
+node plugin-skills/feishu-notify/scripts/send_feishu_msg.mjs <chat_id> "消息内容" --mention "open_id,显示名"
+
+# 多个 @ 提及
+node plugin-skills/feishu-notify/scripts/send_feishu_msg.mjs <chat_id> "消息内容" --mention "open_id1,名字1" "open_id2,名字2"
+
+# ⚠️ 不要这样写（手动拼 <at> 标签容易转义错误）：
+# ❌ node script.mjs <chat_id> "消息 <at user_id=\"id\">名字</at>"
+```
+
+**重要：必须用 Node.js 脚本，不要用 PowerShell，否则中文会变 ?**
+
+常用群组：
+- 月圆之夜CCG开发群: `oc_59afc01122ec0cd04ca4d8c5103c7a77`
+
+常用成员：
+- 兵王(周以天): `ou_348eeddd81d4c03865f9f1684fce6966`
 
 ## Related
 

@@ -29,9 +29,14 @@ const url = await createBug({
   branch: 'YZY_1V1 V1.0 Beta',
   description: 'Description',
   attachments: ['path/to/img1.jpg', 'path/to/img2.png'],  // 可选: 截图附件
+  headless: false,         // ⚡ 默认 false（headed 更快，避免 WAF 重试）
 });
 // Returns: https://www.tapd.cn/tapd_fe/31253609/bug/detail/{id}
-```
+
+### ⚡ 速度说明（优化版 v2）
+- 预期提单耗时：**40-60s**（含 Playwright 启动 + 页面加载）
+- 优化手段：`waitForTimeout` 砍到最低，改用 `waitForSelector`、批量 evaluate、并行 select
+- 如果只要文本字段不带附件，可再快 ~15s
 
 ### Required Fields (must fill)
 
@@ -90,6 +95,9 @@ When the user sends images/messages with player feedback screenshots:
 | 特效 (Effect) | `肖和;` | `周以天;` |
 
 **所有 bug 单抄送人默认加兵王（周以天）**
+
+### ⚠️ 重要规则
+- **谁让我开单，谁就是处理人。** 除非用户明确说「给 XX 开单」，否则不要猜处理人。
 
 ## Set Handler/CC - Autocomplete (IMPORTANT)
 
