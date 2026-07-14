@@ -3,7 +3,7 @@ name: tapd-cookie-keepalive
 description: Manage TAPD cookie sessions: login flow, daily keepalive, and cookie refresh. Trigger when user says TAPD cookie过期、保活、重新登录、cookie失效、TAPD login、TAPD保活等相关请求。
 ---
 
-# TAPD Cookie Keepalive
+# TAPD 保活（TAPD Cookie Keepalive）
 
 Maintain TAPD login sessions via Playwright browser automation. Includes login flow and daily cookie keepalive.
 

@@ -3,7 +3,7 @@ name: feishu-notify
 description: 通过飞书 Open API 向飞书群聊发送文本通知消息。支持 @ 提及成员。触发词：通知群、发消息到飞书群、在群里说一声。适用于热更完成通知、服务端更新通知、任何需要 agent 主动发消息到飞书群聊的场景。
 ---
 
-# Feishu Notify
+# 飞书通知（Feishu Notify）
 
 向飞书群聊发送文本消息，支持 UTF-8 中文和 @ 提及。
 

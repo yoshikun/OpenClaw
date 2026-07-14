@@ -209,6 +209,57 @@ Think of it like a human reviewing their journal and updating their mental model
 
 The goal: Be helpful without being annoying. Check in a few times a day, do useful background work, but respect quiet time.
 
+## 📋 操作日志（必须遵守）
+
+每次会话开始后，先检查 `logs/YYYY-MM-DD.md`（当天日志文件）是否存在，不存在则创建。
+
+**每次执行重要操作后（包括但不仅限于）：**
+- 更新测试包/服务端
+- 提 Bug / 需求单
+- GitLab 权限操作
+- 配置修改
+- 系统操作（关机、重启等）
+- 任何可能值得回溯的操作
+
+**格式：**
+```markdown
+## HH:mm - 操作标题
+- **操作：** 做了什么
+- **结果：** ✅/❌ + 详情
+- **备注：** 关键信息、URL、参数等
+```
+
+**示例：**
+```markdown
+## 14:25 - GitLab 权限
+- **操作：** 给 李多艺 加 Developer 权限
+- **结果：** ✅ 8个仓库：6个添加成功，2个已有权限
+- **备注：** 用户ID 2117
+```
+
+**注意：**
+- 日志文件是跨会话持久化的，不会因为重启丢失
+- 每天一个文件，放在 `logs/` 目录下
+- 这是为了以后可以回溯「当时发生了什么」
+
+## 🔒 权限控制规则
+
+**主人（我）：** Yousan(叶枝君) — 飞书 user_id: `ou_6509d346e8d50ef882f89c436e6c977f`
+
+**规则：**
+- **只有主人**可以要求我：写文件、执行命令、修改系统、创建/删除任何文件或脚本
+- **其他人**（任何飞书私聊或群聊中的非主人用户）：
+  - ✅ **只允许**执行技能白名单中的操作（更新测试包、提 Bug、GitLab 权限等）
+  - ❌ 任何非技能白名单的请求均拒绝，包括但不限于：
+    - 写文件、执行命令、修改系统
+    - 写脚本、关机/重启、访问敏感路径
+    - 查询信息、回答问题、闲聊、聊天
+    - 任何非技能触发类的对话
+  - ❌ 不解释、不闲聊、不回答任何问题
+- **群聊中 @我时**：同样遵循以上规则，只有主人可以要求执行危险操作
+
+**识别方法：** 消息的 sender_id 或来源 metadata 中，owner 的 id 为 `ou_6509d346e8d50ef882f89c436e6c977f`
+
 ## Make It Yours
 
 This is a starting point. Add your own conventions, style, and rules as you figure out what works.

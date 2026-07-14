@@ -5,7 +5,7 @@ description: Create bug tickets on TAPD (腾讯敏捷产品研发平台) for the
   Also handles TAPD login, cookie management, and default assignment rules.
 ---
 
-# TAPD Bug & Story Create
+# TAPD 提 Bug（TAPD Bug & Story Create）
 
 Automate creating work items on TAPD for workspace `31253609` (月圆之夜).
 
@@ -15,7 +15,7 @@ Automate creating work items on TAPD for workspace `31253609` (月圆之夜).
 - **Playwright** v1.60.0+
 - **WAF Bypass**: Use provided stealth init script; fallback to `headless: false` if blocked
 
-## Quick Start - Create a Bug
+## Quick Start - Create a Bug (v5)
 
 ```javascript
 import { createBug } from './scripts/create_bug.mjs';
@@ -29,14 +29,19 @@ const url = await createBug({
   branch: 'YZY_1V1 V1.0 Beta',
   description: 'Description',
   attachments: ['path/to/img1.jpg', 'path/to/img2.png'],  // 可选: 截图附件
-  headless: false,         // ⚡ 默认 false（headed 更快，避免 WAF 重试）
 });
-// Returns: https://www.tapd.cn/tapd_fe/31253609/bug/detail/{id}
+// Returns: https://www.tapd.cn/31253609/bugtrace/bugs/detail/{id}
+```
 
-### ⚡ 速度说明（优化版 v2）
-- 预期提单耗时：**40-60s**（含 Playwright 启动 + 页面加载）
-- 优化手段：`waitForTimeout` 砍到最低，改用 `waitForSelector`、批量 evaluate、并行 select
-- 如果只要文本字段不带附件，可再快 ~15s
+### v5 改进说明
+
+| 问题 | 修复方式 |
+|------|----------|
+| 🔴 重复提单 | ✅ 前置去重检查: 30 分钟内相同标题禁止重复提交; 提单成功后写入 `tapd_bug_dedup.json` 缓存 |
+| 🔴 处理人不正确 | ✅ `autoCompleteUser()` 增强: 精确匹配搜索词 + 提交前校验 `#BugCurrentOwner` 隐藏字段值, 不匹配则抛异常阻止提交 |
+| 🟡 提交后无法确定是否成功 | ✅ 主动轮询 URL (每 1s, 最长 20s) 检查跳转或成功提示, 不依赖 waitForNavigation |
+| 🟡 一次操作提交多次 | ✅ 只使用 `#_view` 单个提交按钮, 移除 fallback 到 `#submit_and_continue` |
+| 🟡 空字段提单 | ✅ 提交前校验 title/handler 非空 |
 
 ### Required Fields (must fill)
 
@@ -52,7 +57,8 @@ const url = await createBug({
 ### Submit Button
 
 Click **`#_view`** (visible `<a>` with text "创建") to submit.
-The `#save_return` input is `display: none` — do not click it directly.
+The `#save_view` hidden input is the fallback if `#_view` not found.
+**Do NOT** click `#submit_and_continue` — it creates a second bug.
 
 ### Upload Attachments (Images)
 
@@ -68,13 +74,13 @@ await page.waitForTimeout(1000);
 // 2. 上传文件（#file_input 有多个，用 .first()）
 await page.locator('#file_input').first().setInputFiles('path/to/screenshot.jpg');
 
-// 3. 等待 6s（AJAX 上传到 file.tapd.cn 需要时间）
-await page.waitForTimeout(6000);
+// 3. 等待 3s（AJAX 上传到 file.tapd.cn 需要时间）
+await page.waitForTimeout(3000);
 
 // 4. 多文件依次上传
 for (const filePath of attachmentPaths) {
   await page.locator('#file_input').first().setInputFiles(filePath);
-  await page.waitForTimeout(6000);
+  await page.waitForTimeout(3000);
 }
 ```
 
@@ -96,31 +102,22 @@ When the user sends images/messages with player feedback screenshots:
 
 **所有 bug 单抄送人默认加兵王（周以天）**
 
-### ⚠️ 重要规则
-- **谁让我开单，谁就是处理人。** 除非用户明确说「给 XX 开单」，否则不要猜处理人。
-
 ## Set Handler/CC - Autocomplete (IMPORTANT)
 
 The handler and CC fields use TAPD's user autocomplete. **Do NOT set hidden fields directly** (will show as ID).
 
-Correct approach (use `.first()` + `.type()` + wait 2s + Enter):
-```javascript
-// 处理人 - 多人依次输入
-const ownerInput = page.locator('#BugCurrentOwnerValue').first();
-for (const name of ['叶枝君', '周以天']) {
-  await ownerInput.click();
-  await ownerInput.type(name, { delay: 120 });
-  await page.waitForTimeout(2000); // 等自动补全加载
-  await page.keyboard.press('Enter');
-  await page.waitForTimeout(600);
-}
+**v5 改进：** 自动补全逻辑已封装为 `autoCompleteUser()` 函数，不再需要手动 type/wait/Enter。
+- 逐字输入触发补全（delay 80ms）
+- 等待 `.tt-dropdown-menu` 出现（最多 4s）
+- 精确匹配姓名（多个建议时选包含搜索词的那个）
+- 提交前验证 `#BugCurrentOwner` 隐藏字段非空，否则抛异常阻止提交
 
-// 抄送 - 同样方式
-const ccInput = page.locator('#BugCcValue').first();
-await ccInput.click();
-await ccInput.type('周以天', { delay: 120 });
-await page.waitForTimeout(2000);
-await page.keyboard.press('Enter');
+```javascript
+// 处理人（自动补全已封装）
+const ownerInput = page.locator('#BugCurrentOwnerValue').first();
+await autoCompleteUser(page, ownerInput, '叶枝君', '处理人');
+
+// 校验结果：如果自动补全失败会抛异常，不会提交空字段
 ```
 
 **注意：** `#BugCurrentOwnerValue` 和 `#BugCcValue` 页面上可能有多个，必须用 `.first()`
